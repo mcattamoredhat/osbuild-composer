@@ -92,7 +92,53 @@ func dracutStageOptions(kernelVer, arch string, additionalModules []string) *osb
 	}
 }
 
+<<<<<<< HEAD
 func grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVersion, isolabel string, fdo *blueprint.FDOCustomization) *osbuild.GrubISOStageOptions {
+=======
+func bootISOMonoStageOptions(kernelVer, arch, vendor, product, osVersion, isolabel string) *osbuild.BootISOMonoStageOptions {
+	comprOptions := new(osbuild.FSCompressionOptions)
+	if bcj := osbuild.BCJOption(arch); bcj != "" {
+		comprOptions.BCJ = bcj
+	}
+	var architectures []string
+
+	if arch == distro.X86_64ArchName {
+		architectures = []string{"X64"}
+	} else if arch == distro.Aarch64ArchName {
+		architectures = []string{"AA64"}
+	} else {
+		panic("unsupported architecture")
+	}
+
+	return &osbuild.BootISOMonoStageOptions{
+		Product: osbuild.Product{
+			Name:    product,
+			Version: osVersion,
+		},
+		ISOLabel:   isolabel,
+		Kernel:     kernelVer,
+		KernelOpts: fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", isolabel, kspath),
+		EFI: osbuild.EFI{
+			Architectures: architectures,
+			Vendor:        vendor,
+		},
+		ISOLinux: osbuild.ISOLinux{
+			Enabled: arch == distro.X86_64ArchName,
+			Debug:   false,
+		},
+		Templates: "80-rhel",
+		RootFS: osbuild.RootFS{
+			Size: 9216,
+			Compression: osbuild.FSCompression{
+				Method:  "xz",
+				Options: comprOptions,
+			},
+		},
+	}
+}
+
+func grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVersion, isolabel string, timeout int, fdo *blueprint.FDOCustomization) *osbuild.GrubISOStageOptions {
+>>>>>>> antonio/grub2iso-timeout
 	var architectures []string
 
 	if arch == distro.X86_64ArchName {
@@ -121,6 +167,7 @@ func grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVers
 		Architectures: architectures,
 		Vendor:        vendor,
 	}
+<<<<<<< HEAD
 	if fdo.HasFDO() {
 		grubISOStageOptions.Kernel.Opts = append(grubISOStageOptions.Kernel.Opts, "fdo.manufacturing_server_url="+fdo.ManufacturingServerURL)
 		if fdo.DiunPubKeyInsecure != "" {
@@ -132,6 +179,20 @@ func grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVers
 		if fdo.DiunPubKeyRootCerts != "" {
 			grubISOStageOptions.Kernel.Opts = append(grubISOStageOptions.Kernel.Opts, "fdo.diun_pub_key_root_certs=/fdo_diun_pub_key_root_certs.pem")
 		}
+=======
+
+	grubISOStageOptions.Config = &osbuild.GRUB2Config{Timeout: timeout}
+
+	grubISOStageOptions.Kernel.Opts = append(grubISOStageOptions.Kernel.Opts, "fdo.manufacturing_server_url="+fdo.ManufacturingServerURL)
+	if fdo.DiunPubKeyInsecure != "" {
+		grubISOStageOptions.Kernel.Opts = append(grubISOStageOptions.Kernel.Opts, "fdo.diun_pub_key_insecure="+fdo.DiunPubKeyInsecure)
+	}
+	if fdo.DiunPubKeyHash != "" {
+		grubISOStageOptions.Kernel.Opts = append(grubISOStageOptions.Kernel.Opts, "fdo.diun_pub_key_hash="+fdo.DiunPubKeyHash)
+	}
+	if fdo.DiunPubKeyRootCerts != "" {
+		grubISOStageOptions.Kernel.Opts = append(grubISOStageOptions.Kernel.Opts, "fdo.diun_pub_key_root_certs=/fdo_diun_pub_key_root_certs.pem")
+>>>>>>> antonio/grub2iso-timeout
 	}
 
 	return grubISOStageOptions
